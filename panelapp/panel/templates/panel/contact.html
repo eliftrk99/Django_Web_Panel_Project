@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <!-- Başlık -->
+            <h1 class="mb-4">İletişim</h1>
+            
+            <!-- İletişim Formu -->
+            <section class="mb-5">
+                <h2 class="h5 mb-3">Bize Mesaj Gönderin</h2>
+                <form method="POST">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Adınız</label>
+                        <input type="text" class="form-control" id="name" name="name" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="email" class="form-label">E-posta</label>
+                        <input type="email" class="form-control" id="email" name="email" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="subject" class="form-label">Konu</label>
+                        <input type="text" class="form-control" id="subject" name="subject" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="message" class="form-label">Mesaj</label>
+                        <textarea class="form-control" id="message" name="message" rows="5" required></textarea>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">Gönder</button>
+                </form>
+            </section>
+            
+            <!-- İletişim Bilgileri -->
+            <section>
+                <h2 class="h5 mb-3">İletişim Bilgilerimiz</h2>
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <div class="card h-100 text-center">
+                            <div class="card-body">
+                                <i class="fas fa-phone fa-3x text-primary mb-3"></i>
+                                <img src="img/tel.png" alt="Telefon Icon">
+                                <h6>Telefon</h6>
+                                <p class="card-text">+90 (555) 123-4567</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="card h-100 text-center">
+                            <div class="card-body">
+                                <i class="fas fa-envelope fa-3x text-primary mb-3"></i>
+                                <img src="img/mail.png" alt="Mail Icon">
+                                <h6>E-posta</h6>
+                                <p class="card-text"><a href="mailto:info@example.com">info@example.com</a></p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="card h-100 text-center">
+                            <div class="card-body">
+                                <i class="fas fa-map-marker-alt fa-3x text-primary mb-3"></i>
+                                <img src="panel/static/panel/img/konum.png" alt="Konum Icon">
+                                <h6>Adres</h6>
+                                <p class="card-text">İstanbul, Türkiye</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+</div>
+{% endblock %}

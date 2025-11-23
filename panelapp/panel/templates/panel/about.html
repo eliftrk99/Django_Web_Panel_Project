@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <!-- Başlık -->
+            <h1 class="mb-4">Hakkımızda</h1>
+            
+            <!-- Ana Açıklama -->
+            <section class="mb-5">
+                <h2 class="h4 mb-3">Biz Kimiz?</h2>
+                <p class="lead">
+                    Ürünlerinizi yönetmek ve müşterilerinize daha iyi hizmet vermek için 
+                    tasarlanmış profesyonel bir yönetim platformu.
+                </p>
+            </section>
+
+            <!-- Misyon -->
+            <section class="mb-5">
+                <h2 class="h4 mb-3">Misyonumuz</h2>
+                <p>
+                    İşletmelerine dijital dönüşüm sağlayarak, daha verimli ve 
+                    müşteri odaklı bir yapı oluşturmalarına yardımcı olmaktır.
+                </p>
+            </section>
+
+            <!-- Özellikler -->
+            <section class="mb-5">
+                <h2 class="h4 mb-3">Neden Biz?</h2>
+                <ul class="list-unstyled">
+                    <li class="mb-2"><i class="fas fa-check text-success"></i> Kolay kullanılır arayüz</li>
+                    <li class="mb-2"><i class="fas fa-check text-success"></i> 7/24 teknik destek</li>
+                    <li class="mb-2"><i class="fas fa-check text-success"></i> Güvenli veri depolama</li>
+                    <li class="mb-2"><i class="fas fa-check text-success"></i> Uygun fiyat</li>
+                </ul>
+            </section>
+
+            <!-- İletişim -->
+            <section>
+                <h2 class="h4 mb-3">İletişim</h2>
+                <p>
+                    Herhangi bir sorunuz veya öneriniz için 
+                    <a href="{% url 'contact' %}">bizimle iletişime geçin</a>.
+                </p>
+            </section>
+        </div>
+    </div>
+</div>
+{% endblock %}

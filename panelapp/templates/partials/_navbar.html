@@ -15,12 +15,30 @@
             <li class="nav-item">
                 <a class="nav-link" href="{% url 'my_panels' %}">My Panels</a>
             </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'about' %}">About</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'contact' %}">Contact</a>
+            </li>
             </ul>
         </div>
         <ul class="navbar-nav ms-auto">
             {% if user.is_authenticated %}
+                <li class="media">
+                    <a class="rounded-circle image-fluid" >{{user.image.url}}
+                        
+                    </a>
+                </li>
                 <li class="nav-item">
                     <a class="nav-link" href="{% url "profile" %}">{{ user.get_full_name|title }}</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'notifications' %}">Notifications
+                        {% if user.notifications.unread_count %}
+                            <span class="badge bg-danger">{{ user.notifications.unread_count }}</span>
+                        {% endif %}
+                    </a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="{% url 'logout' %}">Logout</a>
