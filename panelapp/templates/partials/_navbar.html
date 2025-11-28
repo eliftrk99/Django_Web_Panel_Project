@@ -1,9 +1,9 @@
 <nav class="navbar navbar-dark bg-primary navbar-expand-lg">
-    <div class="container">
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar">
+    <div class="container-fluid">
+        <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebar">
             <span class="navbar-toggler-icon"></span>
         </button>
-        <a class="navbar-brand" href="{% url 'home' %}">   PANELAPP</a>
+        <a class="navbar-brand" href="{% url 'home' %}">PANELAPP</a>
         <div class="collapse navbar-collapse" id="navbar">
             <ul class="navbar-nav me-auto">
                 <li class="nav-item">
@@ -26,9 +26,7 @@
         <ul class="navbar-nav ms-auto">
             {% if user.is_authenticated %}
                 <li class="media">
-                    <a class="rounded-circle image-fluid" >{{user.image.url}}
-                        
-                    </a>
+                    <a class="rounded-circle image-fluid">{{user.image.url}}</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="{% url "profile" %}">{{ user.get_full_name|title }}</a>
@@ -54,3 +52,30 @@
         </ul>
     </div>
 </nav>
+
+<!-- Sidebar -->
+<div class="offcanvas offcanvas-start bg-primary" tabindex="-1" id="sidebar" width="100">
+    <div class="offcanvas-header">
+        <h5 class="offcanvas-title text-white">PANELAPP</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
+    </div>
+    <div class="offcanvas-body">
+        <ul class="navbar-nav">
+            <li class="nav-item">
+                <a class="nav-link text-white" href="{% url 'home' %}">Home</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-white" href="{% url 'panels' %}">Panels</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-white" href="{% url 'my_panels' %}">My Panels</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-white" href="{% url 'about' %}">About</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-white" href="{% url 'contact' %}">Contact</a>
+            </li>
+        </ul>
+    </div>
+</div>
