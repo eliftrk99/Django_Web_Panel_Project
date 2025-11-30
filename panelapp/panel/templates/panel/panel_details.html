@@ -19,6 +19,19 @@
                             </h1>
                             <img src="{{ panel.image.url }}" alt="" class="img-fluid" style="float: left; margin-right: 30px; margin-bottom: 30px;">
                             <p class="card-text">{{ panel.description|safe }}</p>
+                            <!-- Katılma/Ayrılma Butonları -->
+                            {% if user.is_authenticated %}
+                                {% if is_joined %}
+                                    <form method="post" action="{% url 'leave_panel' panel.slug %}">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-danger">Panelden Ayrıl</button>
+                                    </form>
+                                {% else %}
+                                    <a href="" class="btn btn-primary">
+                                        Katılmak İçin İstek Gönder
+                                    </a>
+                                {% endif %}
+                            {% endif %}
                         </div>
                     </div>
                 </div>

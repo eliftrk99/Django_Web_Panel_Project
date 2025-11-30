@@ -6,10 +6,16 @@ def register_request(request):
     if request.user.is_authenticated:
         return redirect("home")
     if request.method == "POST":
+        image = request.FILES.get("image")
         username = request.POST["username"]
         email = request.POST["email"]
         firstname = request.POST["firstname"]
         lastname = request.POST["lastname"]
+        city = request.POST.get("city", "")
+        province = request.POST.get("province", "")
+        birthDate = request.POST.get("birthDate", "")
+        cinsiyet = request.POST.get("cinsiyet", "")
+        phone = request.POST.get("phone", "")
         password = request.POST["password"]
         repassword = request.POST["repassword"]
 
@@ -20,20 +26,32 @@ def register_request(request):
                 return render(request, "account/register.html",
                 {
                     "error": "Username already exists",
+                    "image": image,
                     "username": username,
                     "email": email,
                     "firstname": firstname,
-                    "lastname": lastname
+                    "lastname": lastname,
+                    "city": city,
+                    "province": province,
+                    "birthDate": birthDate,
+                    "cinsiyet": cinsiyet,
+                    "phone": phone
                 })
             else:
                 if User.objects.filter(email=email).exists():
                     return render(request, "account/register.html", 
                     {
                         "error": "Email already exists",
+                        "image": image,
                         "username": username,
                         "email": email,
                         "firstname": firstname,
-                        "lastname": lastname
+                        "lastname": lastname,
+                        "city": city,
+                        "province": province,
+                        "birthDate": birthDate,
+                        "cinsiyet": cinsiyet,
+                        "phone": phone
                     })
                 else:
                     user = User.objects.create_user(username=username, email=email, first_name=firstname, last_name=lastname, password=password)
@@ -43,10 +61,16 @@ def register_request(request):
             return render(request, "account/register.html",
             {
                 "error": "Password and Re-Password do not match",
+                "image": image,
                 "username": username,
                 "email": email,
                 "firstname": firstname,
-                "lastname": lastname
+                "lastname": lastname,
+                "city": city,
+                "province": province,
+                "birthDate": birthDate,
+                "cinsiyet": cinsiyet,
+                "phone": phone
             })
 
     return render(request, "account/register.html")
