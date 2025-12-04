@@ -6,16 +6,16 @@ def register_request(request):
     if request.user.is_authenticated:
         return redirect("home")
     if request.method == "POST":
-        image = request.FILES.get("image")
+        image = request.POST["image"]
         username = request.POST["username"]
         email = request.POST["email"]
         firstname = request.POST["firstname"]
         lastname = request.POST["lastname"]
-        city = request.POST.get("city", "")
-        province = request.POST.get("province", "")
-        birthDate = request.POST.get("birthDate", "")
-        cinsiyet = request.POST.get("cinsiyet", "")
-        phone = request.POST.get("phone", "")
+        city = request.POST["city"]
+        province = request.POST["province"]
+        birthDate = request.POST["birthDate"]
+        cinsiyet = request.POST["cinsiyet"]
+        phone = request.POST["phone"]
         password = request.POST["password"]
         repassword = request.POST["repassword"]
 
@@ -54,7 +54,7 @@ def register_request(request):
                         "phone": phone
                     })
                 else:
-                    user = User.objects.create_user(username=username, email=email, first_name=firstname, last_name=lastname, password=password)
+                    user = User.objects.create_user(image=image, username=username, email=email, first_name=firstname, last_name=lastname, city=city, province=province, birthDate=birthDate, cinsiyet=cinsiyet, phone=phone, password=password)
                     user.save()
                     return redirect("login")
         else:

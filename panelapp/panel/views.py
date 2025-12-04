@@ -1,6 +1,10 @@
 from django.http.response import HttpResponse
 from django.shortcuts import render, redirect
+from django.contrib.auth.models import User
 from panel.models import Panel, Category
+from django.db.models import Q
+from django.utils.html import escape
+import re
 
 # Create your views here.
 def index(request):
@@ -115,3 +119,30 @@ def unread_notifications_count(request):
         return HttpResponse("0")
     count = request.user.notifications.unread_count
     return HttpResponse(str(count))
+
+def search_request(request):
+    q = request.GET.get('q')
+    
+    panels = Panel.objects.filter(Q(title__icontains=q) | Q(description__icontains=q))
+    categories = Category.objects.filter(Q(name__icontains=q) | Q(slug__icontains=q))
+    users = User.objects.filter(Q(username__icontains=q) | Q(email__icontains=q))
+
+    # Highlight fonksiyonu
+    def highlight_text(text, query):
+        if not text or not query:
+            return text
+        # Case-insensitive olarak arama terimini <mark> ile sar
+        pattern = re.compile(re.escape(query), re.IGNORECASE)
+        return pattern.sub(f'<mark>{query}</mark>', escape(str(text)))
+    
+    # Panellere highlight ekle
+    for panel in panels:
+        panel.title_highlighted = highlight_text(panel.title, q)
+        panel.description_highlighted = highlight_text(panel.description, q) if panel.description else ""
+    
+    # Kategorilere highlight ekle
+    for cat in categories:
+        cat.name_highlighted = highlight_text(cat.name, q)
+
+    context = {'q': q, 'panels': panels, 'categories': categories, 'users': users}
+    return render(request, 'search/search_results.html', context)

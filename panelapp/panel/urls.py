@@ -26,4 +26,5 @@ urlpatterns = [
     path("notifications/clear", views.clear_notifications, name="clear_notifications"),
     path("notifications/clear_all", views.clear_all_notifications, name="clear_all_notifications"),
     path("notifications/unread_notifications_count", views.unread_notifications_count, name="unread_notifications_count"),
+    path("search/", views.search_request, name="search"),
 ]

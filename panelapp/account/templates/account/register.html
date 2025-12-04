@@ -21,6 +21,18 @@
                     {{ error }}
                 </div>
             {% endif %}
+            <div class="media">
+                <p class="file-upload mb-3">
+                    <input type="file" name="image" accept="images/*" id="id_image">
+                    <img class="rounded-circle image-fluid" src="
+                        {% if user.image %}
+                            {{ user.image.url }}
+                        {% else %}
+                            {% static "account/img/default_img.png" %}
+                        {% endif %}
+                        "alt="Profile Image" style="float: center; width: 150px; height: 150px;">
+                </p>
+            </div>
             <div class="mb-3">
                 <label for="username" class="form-label">Username</label>
                 <input type="text" class="form-control" name="username" value="{{ username }}">
@@ -60,6 +72,10 @@
                         <option>Kadın</option>
                     </select>
                 </p>
+            </div>
+            <div class="mb-3">
+                <label for="phone" class="form-label">Phone</label>
+                <input type="text" class="form-control" name="phone" value="{{ phone }}">
             </div>
             <div class="row mb-3">
                 <div class="col">
