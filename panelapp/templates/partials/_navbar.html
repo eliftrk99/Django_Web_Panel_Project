@@ -39,8 +39,8 @@
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="{% url 'notifications' %}">Notifications
-                        {% if user.notifications.unread_count %}
-                            <span class="badge bg-danger">{{ user.notifications.unread_count }}</span>
+                        {% if unread_notifications_count %}
+                            <span class="badge bg-danger">{{ unread_notifications_count }}</span>
                         {% endif %}
                     </a>
                 </li>

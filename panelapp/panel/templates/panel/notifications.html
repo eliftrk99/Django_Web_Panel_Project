@@ -7,14 +7,30 @@
     {% if notifications %}
         <div class="list-group">
             {% for notification in notifications %}
-                <div class="list-group-item {% if not notification.is_read %}bg-light{% endif %}">
+                <div class="list-group-item {% if not notification.is_read_by_user %}bg-light{% endif %}" id="notification-{{ notification.id }}">
                     <div class="d-flex justify-content-between align-items-start">
-                        <div>
+                        <div class="flex-grow-1">
                             <h5 class="mb-1">{{ notification.title }}</h5>
                             <p class="mb-1">{{ notification.message }}</p>
                             <small class="text-muted">{{ notification.created_at|date:"d.m.Y H:i" }}</small>
                         </div>
-                        <span class="badge bg-primary">{{ notification.get_type_display }}</span>
+                        <div class="ms-3">
+                            <span class="badge bg-primary">{{ notification.get_type_display }}</span>
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        {% if not notification.is_read_by_user %}
+                            <button class="btn btn-sm btn-success mark-read-btn" data-notification-id="{{ notification.id }}">
+                                <i class="bi bi-check"></i> Okundu
+                            </button>
+                        {% else %}
+                            <button class="btn btn-sm btn-warning mark-unread-btn" data-notification-id="{{ notification.id }}">
+                                <i class="bi bi-arrow-counterclockwise"></i> Okunmamış
+                            </button>
+                        {% endif %}
+                        <button class="btn btn-sm btn-danger delete-btn" data-notification-id="{{ notification.id }}">
+                            <i class="bi bi-trash"></i> Sil
+                        </button>
                     </div>
                 </div>
             {% endfor %}
@@ -25,4 +41,131 @@
         </div>
     {% endif %}
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const notificationList = document.querySelector('.list-group');
+    
+    if (notificationList) {
+        // Event delegation - tüm butonlar için
+        notificationList.addEventListener('click', function(e) {
+            if (e.target.closest('.mark-read-btn')) {
+                const notificationId = e.target.closest('.mark-read-btn').dataset.notificationId;
+                markNotification(notificationId, 'read');
+            } else if (e.target.closest('.mark-unread-btn')) {
+                const notificationId = e.target.closest('.mark-unread-btn').dataset.notificationId;
+                markNotification(notificationId, 'unread');
+            } else if (e.target.closest('.delete-btn')) {
+                const notificationId = e.target.closest('.delete-btn').dataset.notificationId;
+                deleteNotification(notificationId);
+            }
+        });
+    }
+
+    function markNotification(notificationId, action) {
+        const url = action === 'read' 
+            ? `/notifications/${notificationId}/mark_as_read`
+            : `/notifications/${notificationId}/mark_as_unread`;
+
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const notifElement = document.getElementById(`notification-${notificationId}`);
+                if (notifElement) {
+                    const btnContainer = notifElement.querySelector('div.mt-2');
+                    const deleteBtn = btnContainer.querySelector('.delete-btn');
+                    
+                    if (action === 'read') {
+                        notifElement.classList.remove('bg-light');
+                        btnContainer.innerHTML = `
+                            <button class="btn btn-sm btn-warning mark-unread-btn" data-notification-id="${notificationId}">
+                                <i class="bi bi-arrow-counterclockwise"></i> Okunmamış
+                            </button>
+                            <button class="btn btn-sm btn-danger delete-btn" data-notification-id="${notificationId}">
+                                <i class="bi bi-trash"></i> Sil
+                            </button>
+                        `;
+                    } else {
+                        notifElement.classList.add('bg-light');
+                        btnContainer.innerHTML = `
+                            <button class="btn btn-sm btn-success mark-read-btn" data-notification-id="${notificationId}">
+                                <i class="bi bi-check"></i> Okundu
+                            </button>
+                            <button class="btn btn-sm btn-danger delete-btn" data-notification-id="${notificationId}">
+                                <i class="bi bi-trash"></i> Sil
+                            </button>
+                        `;
+                    }
+                }
+                updateUnreadCount(data.unread_count);
+            }
+        })
+        .catch(error => console.error('Error:', error));
+    }
+
+    function deleteNotification(notificationId) {
+        if (confirm('Bildirim silinecek. Emin misiniz?')) {
+            fetch(`/notifications/${notificationId}/clear`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const notifElement = document.getElementById(`notification-${notificationId}`);
+                    if (notifElement) {
+                        notifElement.style.opacity = '0.5';
+                        setTimeout(() => {
+                            notifElement.remove();
+                            // Empty message göster
+                            if (!document.querySelector('.list-group .list-group-item')) {
+                                location.reload();
+                            }
+                        }, 300);
+                    }
+                    updateUnreadCount(data.unread_count);
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        }
+    }
+
+    function updateUnreadCount(count) {
+        // Navbar'daki badge
+        const navbarBadge = document.querySelector('span.badge.bg-danger');
+        if (navbarBadge) {
+            if (count > 0) {
+                navbarBadge.textContent = count;
+            } else {
+                navbarBadge.remove();
+            }
+        }
+    }
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+});
+</script>
 {% endblock %}

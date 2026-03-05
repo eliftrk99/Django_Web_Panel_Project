@@ -1,6 +1,8 @@
 from django.db import models
 from django.utils.text import slugify
 from ckeditor.fields import RichTextField
+from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
 
 class Category(models.Model):
     name = models.CharField(max_length=150)
@@ -29,3 +31,38 @@ class Panel(models.Model):
     def save(self, *args, **kwargs):
         self.slug = slugify(self.title)
         super().save(*args, **kwargs)
+
+
+class Notification(models.Model):
+    GENERAL    = 1
+    WARNING    = 2
+    INFO       = 3
+    TYPE_CHOICES = (
+        (GENERAL, "Genel"),
+        (WARNING, "Uyarı"),
+        (INFO,    "Bilgi"),
+    )
+
+    recipient   = models.ManyToManyField(
+                      Group,
+                      related_name="notifications",
+                  )
+    title       = models.CharField(max_length=200)
+    message     = models.TextField()
+    type        = models.PositiveSmallIntegerField(
+                      choices=TYPE_CHOICES,
+                      default=GENERAL,
+                  )
+    is_read     = models.ManyToManyField(
+                      get_user_model(),
+                      related_name="read_notifications",
+                      blank=True,
+                  )
+    created_at  = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        recipients = ", ".join([g.name for g in self.recipient.all()])
+        return f"{self.title} → {recipients}"
