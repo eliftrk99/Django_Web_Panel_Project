@@ -6,6 +6,13 @@ from panel.models import Panel, Category, Notification
 from django.db.models import Q, Exists, OuterRef
 from django.utils.html import escape
 import re
+from accounting.models import Category as AccountingCategory, Account, Income, Expense, Transfer
+from django.views.decorators.http import require_POST
+from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth.decorators import user_passes_test
+import json
+from datetime import date
+from decimal import Decimal, InvalidOperation
 
 # Helper function untuk menghitung unread notifications
 def get_unread_notifications_count(user):
@@ -20,6 +27,19 @@ def index(request):
         "categories": Category.objects.all(),
         "unread_notifications_count": get_unread_notifications_count(request.user)
     }
+
+    # Admin yetkisi olan kullanıcılar için muhasebe verilerini ekle
+    if request.user.is_authenticated and request.user.is_staff:
+        context.update({
+            "accounting_categories": AccountingCategory.objects.all(),
+            "accounts": Account.objects.filter(is_active=True),
+            "recent_incomes": Income.objects.filter(user=request.user).order_by('-date')[:5],
+            "recent_expenses": Expense.objects.filter(user=request.user).order_by('-date')[:5],
+            "recent_transfers": Transfer.objects.filter(user=request.user).order_by('-date')[:5],
+            "total_balance": sum(account.balance for account in Account.objects.filter(is_active=True)),
+            "today": date.today()
+        })
+
     return render(request, "panel/index.html", context)
 
 def panels(request):
@@ -47,6 +67,166 @@ def panel_details(request, slug):
         "panel": panel,
         "unread_notifications_count": get_unread_notifications_count(request.user)
     })
+
+
+# Muhasebe işlemleri - sadece admin kullanıcıları için
+@user_passes_test(lambda u: u.is_staff)
+@require_POST
+def add_income(request):
+    """Gelir ekleme işlemi"""
+    try:
+        data = json.loads(request.body)
+
+        # Veri tiplerini dönüştür
+        try:
+            amount = Decimal(str(data['amount']))
+            category_id = int(data['category'])
+            account_id = int(data['account'])
+            transaction_date = date.fromisoformat(data['date'])
+        except (ValueError, InvalidOperation, KeyError) as e:
+            return JsonResponse({'success': False, 'message': f'Geçersiz veri formatı: {str(e)}'})
+
+        # Kategori ve hesap kontrolü
+        try:
+            category = AccountingCategory.objects.get(id=category_id, type='income')
+            account = Account.objects.get(id=account_id, is_active=True)
+        except AccountingCategory.DoesNotExist:
+            return JsonResponse({'success': False, 'message': 'Geçersiz gelir kategorisi'})
+        except Account.DoesNotExist:
+            return JsonResponse({'success': False, 'message': 'Geçersiz veya aktif olmayan hesap'})
+
+        income = Income.objects.create(
+            user=request.user,
+            category=category,
+            account=account,
+            amount=amount,
+            source=data.get('source', ''),
+            description=data['description'],
+            date=transaction_date
+        )
+        return JsonResponse({
+            'success': True,
+            'message': 'Gelir başarıyla eklendi',
+            'income': {
+                'id': income.id,
+                'category': income.category.name,
+                'amount': str(income.amount),
+                'description': income.description,
+                'date': income.date.strftime('%d.%m.%Y')
+            }
+        })
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'message': 'Geçersiz JSON verisi'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': f'Beklenmeyen hata: {str(e)}'})
+
+
+@user_passes_test(lambda u: u.is_staff)
+@require_POST
+def add_expense(request):
+    """Gider ekleme işlemi"""
+    try:
+        data = json.loads(request.body)
+
+        # Veri tiplerini dönüştür
+        try:
+            amount = Decimal(str(data['amount']))
+            category_id = int(data['category'])
+            account_id = int(data['account'])
+            transaction_date = date.fromisoformat(data['date'])
+        except (ValueError, InvalidOperation, KeyError) as e:
+            return JsonResponse({'success': False, 'message': f'Geçersiz veri formatı: {str(e)}'})
+
+        # Kategori ve hesap kontrolü
+        try:
+            category = AccountingCategory.objects.get(id=category_id, type='expense')
+            account = Account.objects.get(id=account_id, is_active=True)
+        except AccountingCategory.DoesNotExist:
+            return JsonResponse({'success': False, 'message': 'Geçersiz gider kategorisi'})
+        except Account.DoesNotExist:
+            return JsonResponse({'success': False, 'message': 'Geçersiz veya aktif olmayan hesap'})
+
+        expense = Expense.objects.create(
+            user=request.user,
+            category=category,
+            account=account,
+            amount=amount,
+            recipient=data.get('recipient', ''),
+            description=data['description'],
+            date=transaction_date
+        )
+        return JsonResponse({
+            'success': True,
+            'message': 'Gider başarıyla eklendi',
+            'expense': {
+                'id': expense.id,
+                'category': expense.category.name,
+                'amount': str(expense.amount),
+                'description': expense.description,
+                'date': expense.date.strftime('%d.%m.%Y')
+            }
+        })
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'message': 'Geçersiz JSON verisi'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': f'Beklenmeyen hata: {str(e)}'})
+
+
+@user_passes_test(lambda u: u.is_staff)
+@require_POST
+def add_transfer(request):
+    """Transfer işlemi"""
+    try:
+        data = json.loads(request.body)
+
+        # Veri tiplerini dönüştür
+        try:
+            amount = Decimal(str(data['amount']))
+            from_account_id = int(data['from_account'])
+            to_account_id = int(data['to_account'])
+            transaction_date = date.fromisoformat(data['date'])
+        except (ValueError, InvalidOperation, KeyError) as e:
+            return JsonResponse({'success': False, 'message': f'Geçersiz veri formatı: {str(e)}'})
+
+        # Aynı hesaba transfer kontrolü
+        if from_account_id == to_account_id:
+            return JsonResponse({'success': False, 'message': 'Gönderen ve alan hesap aynı olamaz'})
+
+        # Hesap kontrolü
+        try:
+            from_account = Account.objects.get(id=from_account_id, is_active=True)
+            to_account = Account.objects.get(id=to_account_id, is_active=True)
+        except Account.DoesNotExist:
+            return JsonResponse({'success': False, 'message': 'Geçersiz veya aktif olmayan hesap'})
+
+        # Yetersiz bakiye kontrolü
+        if from_account.balance < amount:
+            return JsonResponse({'success': False, 'message': f'Yetersiz bakiye. Mevcut bakiye: {from_account.balance} {from_account.currency}'})
+
+        transfer = Transfer.objects.create(
+            user=request.user,
+            from_account=from_account,
+            to_account=to_account,
+            amount=amount,
+            description=data['description'],
+            date=transaction_date
+        )
+        return JsonResponse({
+            'success': True,
+            'message': 'Transfer başarıyla gerçekleştirildi',
+            'transfer': {
+                'id': transfer.id,
+                'from_account': transfer.from_account.name,
+                'to_account': transfer.to_account.name,
+                'amount': str(transfer.amount),
+                'description': transfer.description,
+                'date': transfer.date.strftime('%d.%m.%Y')
+            }
+        })
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'message': 'Geçersiz JSON verisi'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': f'Beklenmeyen hata: {str(e)}'})
 
 def panels_by_category(request, slug):
     context = {

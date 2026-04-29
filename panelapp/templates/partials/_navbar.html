@@ -45,12 +45,6 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'sms:send_sms' %}">SMS Gönder</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'sms:sms_history' %}">SMS Geçmişi</a>
-                </li>
-                <li class="nav-item">
                     <a class="nav-link" href="{% url 'logout' %}">Logout</a>
                 </li>
             {% else %}
@@ -95,10 +89,10 @@
                 <a class="nav-link text-white" href="{% url 'contact' %}">Contact</a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="{% url 'sms:send_sms' %}">SMS Gönder</a>
+                <a class="nav-link text-white" href="{% url 'sms:send_sms' %}">SMS Gönder</a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="{% url 'sms:sms_history' %}">SMS Geçmişi</a>
+                <a class="nav-link text-white" href="{% url 'sms:sms_history' %}">SMS Geçmişi</a>
             </li>
             <li class="nav-item">
                 <a class="nav-link text-white" href="{% include 'partials/_categories.html' %}"></a>

@@ -19,17 +19,392 @@
             <h1>Homepage</h1>
             <hr>
 
+            {% if user.is_authenticated and user.is_staff %}
+                <!-- Muhasebe Bölümü -->
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="fas fa-calculator"></i> Muhasebe İşlemleri</h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Bakiye Özeti -->
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <div class="card bg-success text-white">
+                                    <div class="card-body text-center">
+                                        <h6>Toplam Bakiye</h6>
+                                        <h4>{{ total_balance|floatformat:2 }} TRY</h4>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card bg-info text-white">
+                                    <div class="card-body text-center">
+                                        <h6>Aktif Hesaplar</h6>
+                                        <h4>{{ accounts|length }}</h4>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card bg-warning text-white">
+                                    <div class="card-body text-center">
+                                        <h6>Bu Ay İşlemler</h6>
+                                        <h4>{{ recent_incomes|length|add:recent_expenses|length|add:recent_transfers|length }}</h4>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Hızlı İşlem Butonları -->
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <button class="btn btn-success me-2" data-bs-toggle="modal" data-bs-target="#incomeModal">
+                                    <i class="fas fa-plus"></i> Gelir Ekle
+                                </button>
+                                <button class="btn btn-danger me-2" data-bs-toggle="modal" data-bs-target="#expenseModal">
+                                    <i class="fas fa-minus"></i> Gider Ekle
+                                </button>
+                                <button class="btn btn-info" data-bs-toggle="modal" data-bs-target="#transferModal">
+                                    <i class="fas fa-exchange-alt"></i> Transfer Yap
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Son İşlemler -->
+                        <div class="row">
+                            <div class="col-md-4">
+                                <h6>Son Gelirler</h6>
+                                <div class="list-group">
+                                    {% for income in recent_incomes %}
+                                        <div class="list-group-item">
+                                            <div class="d-flex w-100 justify-content-between">
+                                                <h6 class="mb-1">{{ income.category.name }}</h6>
+                                                <small class="text-success">+{{ income.amount }} TRY</small>
+                                            </div>
+                                            <p class="mb-1">{{ income.description|truncatechars:30 }}</p>
+                                            <small>{{ income.date|date:"d.m.Y" }}</small>
+                                        </div>
+                                    {% empty %}
+                                        <div class="list-group-item text-muted">Henüz gelir kaydı yok</div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <h6>Son Giderler</h6>
+                                <div class="list-group">
+                                    {% for expense in recent_expenses %}
+                                        <div class="list-group-item">
+                                            <div class="d-flex w-100 justify-content-between">
+                                                <h6 class="mb-1">{{ expense.category.name }}</h6>
+                                                <small class="text-danger">-{{ expense.amount }} TRY</small>
+                                            </div>
+                                            <p class="mb-1">{{ expense.description|truncatechars:30 }}</p>
+                                            <small>{{ expense.date|date:"d.m.Y" }}</small>
+                                        </div>
+                                    {% empty %}
+                                        <div class="list-group-item text-muted">Henüz gider kaydı yok</div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <h6>Son Transferler</h6>
+                                <div class="list-group">
+                                    {% for transfer in recent_transfers %}
+                                        <div class="list-group-item">
+                                            <div class="d-flex w-100 justify-content-between">
+                                                <h6 class="mb-1">{{ transfer.from_account.name }} → {{ transfer.to_account.name }}</h6>
+                                                <small class="text-info">{{ transfer.amount }} TRY</small>
+                                            </div>
+                                            <p class="mb-1">{{ transfer.description|truncatechars:30 }}</p>
+                                            <small>{{ transfer.date|date:"d.m.Y" }}</small>
+                                        </div>
+                                    {% empty %}
+                                        <div class="list-group-item text-muted">Henüz transfer kaydı yok</div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+
             {% for panel in panels %}
                 {% if panel.is_active %}
                     {% include 'panel/partials/_panel.html' %}
                 {% endif %}
             {% endfor %}
         </div>
-    </div>    
+    </div>
+</div>
+
+<!-- Gelir Ekleme Modal -->
+<div class="modal fade" id="incomeModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Gelir Ekle</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="incomeForm">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Kategori</label>
+                        <select class="form-select" name="category" required>
+                            <option value="">Seçiniz...</option>
+                            {% for category in accounting_categories %}
+                                {% if category.type == 'income' %}
+                                    <option value="{{ category.id }}">{{ category.name }}</option>
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Hesap</label>
+                        <select class="form-select" name="account" required>
+                            <option value="">Seçiniz...</option>
+                            {% for account in accounts %}
+                                <option value="{{ account.id }}">{{ account.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Tutar</label>
+                        <input type="number" class="form-control" name="amount" step="0.01" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Kaynak</label>
+                        <input type="text" class="form-control" name="source">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Açıklama</label>
+                        <textarea class="form-control" name="description" rows="3" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Tarih</label>
+                        <input type="date" class="form-control" name="date" value="{{ today|date:'Y-m-d' }}" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                    <button type="submit" class="btn btn-success">Kaydet</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Gider Ekleme Modal -->
+<div class="modal fade" id="expenseModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Gider Ekle</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="expenseForm">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Kategori</label>
+                        <select class="form-select" name="category" required>
+                            <option value="">Seçiniz...</option>
+                            {% for category in accounting_categories %}
+                                {% if category.type == 'expense' %}
+                                    <option value="{{ category.id }}">{{ category.name }}</option>
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Hesap</label>
+                        <select class="form-select" name="account" required>
+                            <option value="">Seçiniz...</option>
+                            {% for account in accounts %}
+                                <option value="{{ account.id }}">{{ account.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Tutar</label>
+                        <input type="number" class="form-control" name="amount" step="0.01" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Alıcı</label>
+                        <input type="text" class="form-control" name="recipient">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Açıklama</label>
+                        <textarea class="form-control" name="description" rows="3" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Tarih</label>
+                        <input type="date" class="form-control" name="date" value="{{ today|date:'Y-m-d' }}" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                    <button type="submit" class="btn btn-danger">Kaydet</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Transfer Modal -->
+<div class="modal fade" id="transferModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Transfer Yap</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="transferForm">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Gönderen Hesap</label>
+                        <select class="form-select" name="from_account" required>
+                            <option value="">Seçiniz...</option>
+                            {% for account in accounts %}
+                                <option value="{{ account.id }}">{{ account.name }} ({{ account.balance }} TRY)</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Alan Hesap</label>
+                        <select class="form-select" name="to_account" required>
+                            <option value="">Seçiniz...</option>
+                            {% for account in accounts %}
+                                <option value="{{ account.id }}">{{ account.name }} ({{ account.balance }} TRY)</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Tutar</label>
+                        <input type="number" class="form-control" name="amount" step="0.01" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Açıklama</label>
+                        <textarea class="form-control" name="description" rows="3" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Tarih</label>
+                        <input type="date" class="form-control" name="date" value="{{ today|date:'Y-m-d' }}" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                    <button type="submit" class="btn btn-info">Transfer Yap</button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 
 {% endblock %}
 
 {% block js_files %}
     <script src="{% static 'panel/js/script.js' %}"></script>
+    <script>
+        // Muhasebe işlemleri için JavaScript
+        document.addEventListener('DOMContentLoaded', function() {
+            // CSRF token al
+            function getCookie(name) {
+                let cookieValue = null;
+                if (document.cookie && document.cookie !== '') {
+                    const cookies = document.cookie.split(';');
+                    for (let i = 0; i < cookies.length; i++) {
+                        const cookie = cookies[i].trim();
+                        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                            break;
+                        }
+                    }
+                }
+                return cookieValue;
+            }
+            const csrftoken = getCookie('csrftoken');
+
+            // Gelir formu
+            document.getElementById('incomeForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                const formData = new FormData(this);
+                const data = Object.fromEntries(formData);
+
+                fetch('/accounting/add_income/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrftoken
+                    },
+                    body: JSON.stringify(data)
+                })
+                .then(response => response.json())
+                .then(result => {
+                    if (result.success) {
+                        alert(result.message);
+                        location.reload();
+                    } else {
+                        alert('Hata: ' + result.message);
+                    }
+                })
+                .catch(error => {
+                    alert('Bir hata oluştu: ' + error);
+                });
+            });
+
+            // Gider formu
+            document.getElementById('expenseForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                const formData = new FormData(this);
+                const data = Object.fromEntries(formData);
+
+                fetch('/accounting/add_expense/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrftoken
+                    },
+                    body: JSON.stringify(data)
+                })
+                .then(response => response.json())
+                .then(result => {
+                    if (result.success) {
+                        alert(result.message);
+                        location.reload();
+                    } else {
+                        alert('Hata: ' + result.message);
+                    }
+                })
+                .catch(error => {
+                    alert('Bir hata oluştu: ' + error);
+                });
+            });
+
+            // Transfer formu
+            document.getElementById('transferForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                const formData = new FormData(this);
+                const data = Object.fromEntries(formData);
+
+                fetch('/accounting/add_transfer/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrftoken
+                    },
+                    body: JSON.stringify(data)
+                })
+                .then(response => response.json())
+                .then(result => {
+                    if (result.success) {
+                        alert(result.message);
+                        location.reload();
+                    } else {
+                        alert('Hata: ' + result.message);
+                    }
+                })
+                .catch(error => {
+                    alert('Bir hata oluştu: ' + error);
+                });
+            });
+        });
+    </script>
 {% endblock %}

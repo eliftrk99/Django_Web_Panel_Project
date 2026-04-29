@@ -27,4 +27,8 @@ urlpatterns = [
     path("notifications/clear_all", views.clear_all_notifications, name="clear_all_notifications"),
     path("notifications/unread_notifications_count", views.unread_notifications_count, name="unread_notifications_count"),
     path("search/", views.search_request, name="search"),
+    # Muhasebe işlemleri
+    path("accounting/add_income/", views.add_income, name="add_income"),
+    path("accounting/add_expense/", views.add_expense, name="add_expense"),
+    path("accounting/add_transfer/", views.add_transfer, name="add_transfer"),
 ]
