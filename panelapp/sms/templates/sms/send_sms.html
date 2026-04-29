@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<div class="container mt-4">
+    <h2>SMS Gönder</h2>
+
+    <!-- SMS Service Status Alert -->
+    <div class="alert alert-info" role="alert">
+        <strong>SMS Servis Durumu:</strong>
+        {% if sms_service_status == 'twilio' %}
+            <span class="badge bg-success">Twilio Aktif</span> - Gerçek SMS gönderimi aktif
+        {% elif sms_service_status == 'mock' %}
+            <span class="badge bg-warning">Test Modu</span> - SMS gönderimi simüle ediliyor
+        {% else %}
+            <span class="badge bg-secondary">Devre Dışı</span> - SMS gönderimi şu anda devre dışı
+        {% endif %}
+    </div>
+
+    {% if sms_service_status == 'disabled' %}
+    <div class="alert alert-warning" role="alert">
+        <h5>SMS servisi şu anda devre dışı!</h5>
+        <p>SMS gönderme özelliği yakında aktif edilecektir. Şimdilik sadece test amaçlı kullanılabilir.</p>
+    </div>
+    {% endif %}
+
+    <form method="post">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="recipient" class="form-label">Alıcı Numarası</label>
+            <input type="tel" class="form-control" id="recipient" name="recipient"
+                   placeholder="+905xxxxxxxxx" required>
+            <div class="form-text">Uluslararası format: +90 5xx xxx xx xx</div>
+        </div>
+        <div class="mb-3">
+            <label for="message" class="form-label">Mesaj</label>
+            <textarea class="form-control" id="message" name="message" rows="4"
+                      maxlength="160" required></textarea>
+            <div class="form-text">Maksimum 160 karakter ({{ message|length|default:0 }}/160)</div>
+        </div>
+        <button type="submit" class="btn btn-primary">
+            {% if sms_service_status == 'disabled' %}
+                Test Gönder (Gerçek SMS Gitmez)
+            {% else %}
+                SMS Gönder
+            {% endif %}
+        </button>
+        <a href="{% url 'sms:sms_history' %}" class="btn btn-outline-secondary ms-2">Geçmiş</a>
+    </form>
+</div>
+
+<script>
+// Character counter for SMS
+document.getElementById('message').addEventListener('input', function() {
+    const counter = this.nextElementSibling;
+    const length = this.value.length;
+    counter.innerHTML = `Maksimum 160 karakter (${length}/160)`;
+
+    if (length > 160) {
+        counter.classList.add('text-danger');
+        this.classList.add('is-invalid');
+    } else {
+        counter.classList.remove('text-danger');
+        this.classList.remove('is-invalid');
+    }
+});
+</script>
+{% endblock %}

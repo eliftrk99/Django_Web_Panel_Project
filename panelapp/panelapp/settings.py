@@ -40,6 +40,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'ckeditor',
+    'twilio',
+    'sms.apps.SmsConfig',
 ]
 
 MIDDLEWARE = [
@@ -131,3 +133,9 @@ MEDIA_URL = '/images/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# SMS Settings
+SMS_SERVICE_TYPE = 'disabled'  # Options: 'twilio', 'mock', 'disabled'
+
+# SMS_SERVICE_TYPE = 'mock'  # Gerçek SMS gitmez, loglanır
+# SMS_SERVICE_TYPE = 'twilio'  # Gerçek SMS gönderimi (credentials gerektirir)

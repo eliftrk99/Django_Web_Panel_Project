@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>SMS Geçmişi</h2>
+        <a href="{% url 'sms:send_sms' %}" class="btn btn-primary">Yeni SMS Gönder</a>
+    </div>
+
+    <!-- SMS Service Status Alert -->
+    <div class="alert alert-info mb-4" role="alert">
+        <strong>SMS Servis Durumu:</strong>
+        {% if sms_service_status == 'twilio' %}
+            <span class="badge bg-success">Twilio Aktif</span> - Gerçek SMS gönderimi aktif
+        {% elif sms_service_status == 'mock' %}
+            <span class="badge bg-warning">Test Modu</span> - SMS gönderimi simüle ediliyor
+        {% else %}
+            <span class="badge bg-secondary">Devre Dışı</span> - SMS gönderimi şu anda devre dışı
+        {% endif %}
+    </div>
+
+    {% if sms_logs %}
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th>Alıcı</th>
+                    <th>Mesaj</th>
+                    <th>Durum</th>
+                    <th>Gönderim ID</th>
+                    <th>Tarih</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sms in sms_logs %}
+                <tr>
+                    <td>
+                        <code>{{ sms.recipient }}</code>
+                    </td>
+                    <td>
+                        <div class="text-truncate" style="max-width: 300px;" title="{{ sms.message }}">
+                            {{ sms.message|truncatechars:50 }}
+                        </div>
+                    </td>
+                    <td>
+                        <span class="badge
+                            {% if sms.status == 'sent' %}bg-success
+                            {% elif sms.status == 'failed' %}bg-danger
+                            {% else %}bg-warning{% endif %}">
+                            {{ sms.get_status_display }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if sms.twilio_sid %}
+                            <code class="small">{{ sms.twilio_sid|truncatechars:20 }}</code>
+                        {% else %}
+                            <span class="text-muted">-</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <small class="text-muted">{{ sms.created_at|date:"d.m.Y H:i:s" }}</small>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Statistics -->
+    <div class="row mt-4">
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title text-success">{{ sent_count|default:0 }}</h5>
+                    <p class="card-text">Gönderilen</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title text-danger">{{ failed_count|default:0 }}</h5>
+                    <p class="card-text">Başarısız</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title text-warning">{{ pending_count|default:0 }}</h5>
+                    <p class="card-text">Bekliyor</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title text-primary">{{ total_count|default:0 }}</h5>
+                    <p class="card-text">Toplam</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% else %}
+    <div class="alert alert-info text-center" role="alert">
+        <h5>Henüz SMS gönderilmemiş</h5>
+        <p>İlk SMS'inizi göndermek için <a href="{% url 'sms:send_sms' %}">buraya tıklayın</a>.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
