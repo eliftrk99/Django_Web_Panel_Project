@@ -109,7 +109,7 @@ class Expense(Transaction):
                                 limit_choices_to={'type': 'expense'},
                                 verbose_name='Kategori')
     account = models.ForeignKey(Account, on_delete=models.CASCADE, verbose_name='Hesap')
-    recipient = models.CharField(max_length=100, blank=True, verbose_name='Alıcı')
+    payment_method = models.CharField(max_length=100, blank=True, verbose_name='Ödeme Yöntemi')
 
     class Meta:
         verbose_name = 'Gider'

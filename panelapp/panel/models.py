@@ -24,6 +24,13 @@ class Panel(models.Model):
     description = RichTextField()
     slug = models.SlugField(null=False, blank=True, unique=True, db_index=True, editable=False)
     categories = models.ManyToManyField(Category, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='Oluşturulma Tarihi')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='Güncellenme Tarihi')
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'Panel'
+        verbose_name_plural = 'Paneller'
 
     def __str__(self):
         return f"{self.title}"
