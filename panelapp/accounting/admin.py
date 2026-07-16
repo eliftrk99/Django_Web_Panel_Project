@@ -65,7 +65,6 @@ class AccountAdmin(admin.ModelAdmin):
     list_filter = ['type', 'is_active', 'currency', 'created_at']
     search_fields = ['name', 'description']
     readonly_fields = ['created_at', 'updated_at', 'balance_display']
-    list_editable = ['is_active']
     ordering = ['-is_active', 'name']
     date_hierarchy = 'created_at'
     
@@ -351,11 +350,6 @@ class TransferAdmin(admin.ModelAdmin):
 admin.site.site_header = 'Panel Yönetim Paneli'
 admin.site.site_title = 'Yönetim Paneli'
 admin.site.index_title = 'Hoşgeldiniz'
-    list_per_page = 25
-
-    def description_short(self, obj):
-        return obj.description[:50] + '...' if len(obj.description) > 50 else obj.description
-    description_short.short_description = 'Açıklama'
 
 
 class ExpenseAdmin(admin.ModelAdmin):
@@ -384,14 +378,9 @@ class TransferAdmin(admin.ModelAdmin):
     description_short.short_description = 'Açıklama'
 
 
-# Modelleri admin paneline kaydet
-admin.site.register(Category, CategoryAdmin)
-admin.site.register(Account, AccountAdmin)
-admin.site.register(Income, IncomeAdmin)
-admin.site.register(Expense, ExpenseAdmin)
-admin.site.register(Transfer, TransferAdmin)
-
-# Admin panel başlığı
-admin.site.site_header = "Muhasebe Yönetim Sistemi"
+# Django Admin site özelleştirmesi
+admin.site.site_header = 'Panel Yönetim Paneli'
+admin.site.site_title = 'Yönetim Paneli'
+admin.site.index_title = 'Hoşgeldiniz'
 admin.site.site_title = "Muhasebe Admin"
 admin.site.index_title = "Muhasebe Yönetimi"
