@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% block title %}Mesajlar{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <h2>Mesajlaşma</h2>
+  <form method="post" action="{% url 'send_message' %}" class="card p-3 mb-4">
+    {% csrf_token %}
+    <div class="mb-3">
+      <label class="form-label">Alıcı kullanıcı adı</label>
+      <input class="form-control" name="recipient" required>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Konu</label>
+      <input class="form-control" name="subject" required>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Mesaj</label>
+      <textarea class="form-control" name="body" rows="4" required></textarea>
+    </div>
+    <button class="btn btn-primary" type="submit">Gönder</button>
+  </form>
+
+  <div class="row">
+    <div class="col-md-6">
+      <h4>Gelen Kutusu</h4>
+      {% for message in inbox_messages %}
+        <div class="card mb-2">
+          <div class="card-body">
+            <strong>{{ message.subject }}</strong>
+            <div class="small text-muted">Gönderen: {{ message.sender.username }}</div>
+            <div>{{ message.body }}</div>
+          </div>
+        </div>
+      {% empty %}
+        <div class="alert alert-info">Gelen mesaj yok.</div>
+      {% endfor %}
+    </div>
+    <div class="col-md-6">
+      <h4>Gönderilenler</h4>
+      {% for message in sent_messages %}
+        <div class="card mb-2">
+          <div class="card-body">
+            <strong>{{ message.subject }}</strong>
+            <div class="small text-muted">Alıcı: {{ message.recipient.username }}</div>
+            <div>{{ message.body }}</div>
+          </div>
+        </div>
+      {% empty %}
+        <div class="alert alert-info">Gönderilen mesaj yok.</div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

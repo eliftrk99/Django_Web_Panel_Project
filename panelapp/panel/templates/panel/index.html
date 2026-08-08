@@ -16,7 +16,19 @@
             {% include 'partials/_categories.html' %}
         </div>
         <div class="col-9">
-            <h1>Homepage</h1>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <h1 class="h3 mb-1">Ana Sayfa</h1>
+                    <p class="text-muted mb-0">Panel etkinliklerini, belgeleri ve mesajları tek yerde takip edin.</p>
+                </div>
+                {% if user.is_authenticated %}
+                    <div class="d-flex gap-2">
+                        <a href="{% url 'documents' %}" class="btn btn-outline-primary btn-sm">Belgeler</a>
+                        <a href="{% url 'messages' %}" class="btn btn-outline-secondary btn-sm">Mesajlar</a>
+                        <a href="{% url 'reports' %}" class="btn btn-outline-success btn-sm">Raporlar</a>
+                    </div>
+                {% endif %}
+            </div>
             <hr>
 
             {% if user.is_authenticated and user.is_staff %}
@@ -127,11 +139,53 @@
                 </div>
             {% endif %}
 
-            {% for panel in panels %}
-                {% if panel.is_active %}
-                    {% include 'panel/partials/_panel.html' %}
-                {% endif %}
-            {% endfor %}
+            <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body">
+                            <h2 class="h6 mb-2">Son Belgeler</h2>
+                            {% if recent_documents %}
+                                <ul class="list-unstyled mb-0">
+                                    {% for document in recent_documents %}
+                                        <li class="mb-2"><strong>{{ document.title }}</strong><br><small class="text-muted">{{ document.created_at|date:"d.m.Y" }}</small></li>
+                                    {% endfor %}
+                                </ul>
+                            {% else %}
+                                <p class="text-muted mb-0">Henüz belge yok.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body">
+                            <h2 class="h6 mb-2">Son Mesajlar</h2>
+                            {% if recent_messages %}
+                                <ul class="list-unstyled mb-0">
+                                    {% for message in recent_messages %}
+                                        <li class="mb-2"><strong>{{ message.subject }}</strong><br><small class="text-muted">{{ message.created_at|date:"d.m.Y" }}</small></li>
+                                    {% endfor %}
+                                </ul>
+                            {% else %}
+                                <p class="text-muted mb-0">Henüz mesaj yok.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {% if panels %}
+                <div class="mb-3">
+                    <h2 class="h5">Aktif Paneller</h2>
+                </div>
+                {% for panel in panels %}
+                    {% if panel.is_active %}
+                        {% include 'panel/partials/_panel.html' %}
+                    {% endif %}
+                {% endfor %}
+            {% else %}
+                <div class="alert alert-light border">Şu anda gösterilecek aktif panel bulunmuyor.</div>
+            {% endif %}
         </div>
     </div>
 </div>

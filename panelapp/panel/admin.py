@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Panel, Category, Notification
+from .models import Panel, Category, Notification, Document, Message
 from django.utils.safestring import mark_safe
 from django.utils.html import format_html
 
@@ -9,7 +9,7 @@ class CategoryAdmin(admin.ModelAdmin):
     """Panel kategorileri yönetimi"""
     list_display = ('name', 'slug', 'get_panel_count')
     search_fields = ('name', 'slug')
-    prepopulated_fields = {'slug': ('name',)}
+    readonly_fields = ('slug',)
     ordering = ('name',)
     
     def get_panel_count(self, obj):
@@ -108,6 +108,20 @@ class PanelAdmin(admin.ModelAdmin):
         if not change:  # Yeni nesne
             pass
         super().save_model(request, obj, form, change)
+
+
+@admin.register(Document)
+class DocumentAdmin(admin.ModelAdmin):
+    list_display = ('title', 'category', 'uploaded_by', 'scope_region', 'scope_district', 'created_at')
+    search_fields = ('title', 'description', 'uploaded_by__username')
+    list_filter = ('category', 'scope_region', 'scope_district')
+
+
+@admin.register(Message)
+class MessageAdmin(admin.ModelAdmin):
+    list_display = ('subject', 'sender', 'recipient', 'is_read', 'created_at')
+    search_fields = ('subject', 'body', 'sender__username', 'recipient__username')
+    list_filter = ('is_read', 'created_at')
 
 
 @admin.register(Notification)

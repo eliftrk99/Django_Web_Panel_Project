@@ -1,9 +1,9 @@
 from django.http.response import HttpResponse, JsonResponse
 from django.shortcuts import render, redirect
 from django.contrib.auth.models import User
-from django.contrib import messages
-from panel.models import Panel, Category, Notification
-from django.db.models import Q, Exists, OuterRef
+from django.contrib import messages as django_messages
+from panel.models import Panel, Category, Notification, Document, Message
+from django.db.models import Q, Exists, OuterRef, Sum
 from django.utils.html import escape
 import re
 from accounting.models import Category as AccountingCategory, Account, Income, Expense, Transfer
@@ -14,6 +14,27 @@ import json
 from datetime import date
 from decimal import Decimal, InvalidOperation
 
+
+def build_reporting_context(user):
+    incomes = Income.objects.all()
+    expenses = Expense.objects.all()
+
+    if not (user.is_superuser or user.is_staff):
+        incomes = incomes.filter(user=user)
+        expenses = expenses.filter(user=user)
+
+    income_total = incomes.aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+    expense_total = expenses.aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+    net_balance = income_total - expense_total
+
+    return {
+        'income_total': income_total,
+        'expense_total': expense_total,
+        'net_balance': net_balance,
+        'incomes': incomes.order_by('-date')[:10],
+        'expenses': expenses.order_by('-date')[:10],
+    }
+
 # Helper function untuk menghitung unread notifications
 def get_unread_notifications_count(user):
     if not user.is_authenticated:
@@ -22,10 +43,14 @@ def get_unread_notifications_count(user):
 
 # Create your views here.
 def index(request):
+    visible_panels = Panel.objects.filter_for_user(request.user).filter(is_active=True) if request.user.is_authenticated else Panel.objects.none()
+
     context = {
-        "panels": Panel.objects.filter(is_active=True),
+        "panels": visible_panels,
         "categories": Category.objects.all(),
-        "unread_notifications_count": get_unread_notifications_count(request.user)
+        "unread_notifications_count": get_unread_notifications_count(request.user),
+        "recent_documents": Document.objects.filter_for_user(request.user).order_by('-created_at')[:3] if request.user.is_authenticated else [],
+        "recent_messages": Message.objects.inbox_for_user(request.user).order_by('-created_at')[:3] if request.user.is_authenticated else [],
     }
 
     # Admin yetkisi olan kullanıcılar için muhasebe verilerini ekle
@@ -44,7 +69,7 @@ def index(request):
 
 def panels(request):
     context = {
-        "panels": Panel.objects.all(),
+        "panels": Panel.objects.filter_for_user(request.user).filter(is_active=True),
         "categories": Category.objects.all(),
         "unread_notifications_count": get_unread_notifications_count(request.user)
     }
@@ -54,7 +79,7 @@ def my_panels(request):
     if not request.user.is_authenticated:
         return redirect("home")
     context = {
-        "panels": Panel.objects.filter(is_joined=True),
+        "panels": Panel.objects.filter_for_user(request.user).filter(is_joined=True),
         "unread_notifications_count": get_unread_notifications_count(request.user)
     }
     return render(request, "panel/my_panels.html", context)
@@ -62,9 +87,11 @@ def my_panels(request):
 def panel_details(request, slug):
 
     panel = Panel.objects.get(slug=slug)
+    is_joined = panel.members.filter(pk=request.user.pk).exists() if request.user.is_authenticated else False
 
     return render(request, "panel/panel_details.html", {
         "panel": panel,
+        "is_joined": is_joined,
         "unread_notifications_count": get_unread_notifications_count(request.user)
     })
 
@@ -244,6 +271,7 @@ def join_panel(request, slug):
         return redirect("home")
     panel = Panel.objects.get(slug=slug)
     panel.members.add(request.user)
+    django_messages.success(request, 'Panel üyeliğiniz oluşturuldu.')
     return redirect("panel_details", slug=slug)
 
 def leave_panel(request, slug):
@@ -251,12 +279,13 @@ def leave_panel(request, slug):
         return redirect("home")
     panel = Panel.objects.get(slug=slug)
     panel.members.remove(request.user)
+    django_messages.info(request, 'Panel üyeliğiniz kaldırıldı.')
     return redirect("panel_details", slug=slug)
 
 def search_panels(request):
     query = request.GET.get("q")
     context = {
-        "panels": Panel.objects.filter(is_active=True, title__icontains=query),
+        "panels": Panel.objects.filter_for_user(request.user).filter(is_active=True, title__icontains=query),
         "categories": Category.objects.all(),
         "search_query": query,
         "unread_notifications_count": get_unread_notifications_count(request.user)
@@ -267,7 +296,69 @@ def about(request):
     context = {"unread_notifications_count": get_unread_notifications_count(request.user)}
     return render(request, "panel/about.html", context)
 
+
+def documents(request):
+    if not request.user.is_authenticated:
+        return redirect("home")
+
+    documents = Document.objects.filter_for_user(request.user)
+    context = {
+        'documents': documents,
+        'unread_notifications_count': get_unread_notifications_count(request.user),
+    }
+    return render(request, 'panel/documents.html', context)
+
+
+def messages(request):
+    if not request.user.is_authenticated:
+        return redirect("home")
+
+    sent = Message.objects.outbox_for_user(request.user)
+    inbox = Message.objects.inbox_for_user(request.user)
+    context = {
+        'sent_messages': sent,
+        'inbox_messages': inbox,
+        'unread_notifications_count': get_unread_notifications_count(request.user),
+    }
+    return render(request, 'panel/messages.html', context)
+
+
+def send_message(request):
+    if not request.user.is_authenticated:
+        return redirect('login')
+
+    if request.method == 'POST':
+        recipient = User.objects.filter(username=request.POST.get('recipient')).first()
+        if not recipient:
+            django_messages.error(request, 'Alıcı bulunamadı.')
+            return redirect('messages')
+
+        Message.objects.create(
+            sender=request.user,
+            recipient=recipient,
+            subject=request.POST.get('subject', 'Yeni mesaj'),
+            body=request.POST.get('body', ''),
+        )
+        django_messages.success(request, 'Mesaj gönderildi.')
+        return redirect('messages')
+
+    return redirect('messages')
+
+
+def reports(request):
+    if not request.user.is_authenticated:
+        return redirect('login')
+
+    context = build_reporting_context(request.user)
+    context['unread_notifications_count'] = get_unread_notifications_count(request.user)
+    return render(request, 'panel/reports.html', context)
+
+
 def contact(request):
+    if request.method == 'POST':
+        django_messages.success(request, 'Mesajınız başarıyla iletildi.')
+        return redirect('contact')
+
     context = {"unread_notifications_count": get_unread_notifications_count(request.user)}
     return render(request, "panel/contact.html", context)
 

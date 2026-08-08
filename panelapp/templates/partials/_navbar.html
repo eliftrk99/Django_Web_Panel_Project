@@ -25,6 +25,15 @@
                     <a class="nav-link" href="{% url 'about' %}">About</a>
                 </li>
                 <li class="nav-item">
+                    <a class="nav-link" href="{% url 'documents' %}">Documents</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'messages' %}">Messages</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'reports' %}">Reports</a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link" href="{% url 'contact' %}">Contact</a>
                 </li>
             </ul>
@@ -86,6 +95,15 @@
                 <a class="nav-link text-white" href="{% url 'about' %}">About</a>
             </li>
             <li class="nav-item">
+                <a class="nav-link text-white" href="{% url 'documents' %}">Documents</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-white" href="{% url 'messages' %}">Messages</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-white" href="{% url 'reports' %}">Reports</a>
+            </li>
+            <li class="nav-item">
                 <a class="nav-link text-white" href="{% url 'contact' %}">Contact</a>
             </li>
             <li class="nav-item">
@@ -93,9 +111,6 @@
             </li>
             <li class="nav-item">
                 <a class="nav-link text-white" href="{% url 'sms:sms_history' %}">SMS Geçmişi</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link text-white" href="{% include 'partials/_categories.html' %}"></a>
             </li>
         </ul>
     </div>

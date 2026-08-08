@@ -1,6 +1,7 @@
 from django.shortcuts import redirect,render
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
+from account.models import UserProfile
 
 def register_request(request):
     if request.user.is_authenticated:
@@ -96,10 +97,42 @@ def login_request(request):
 def profile_request(request):
     if not request.user.is_authenticated:
         return redirect("login")
-    
+
     user = request.user
-    
-    return render(request, "account/profile.html")
+    profile, _ = UserProfile.objects.get_or_create(user=user)
+
+    if request.method == "POST":
+        if 'update' in request.POST:
+            user.username = request.POST.get('username', user.username)
+            user.email = request.POST.get('email', user.email)
+            user.first_name = request.POST.get('firstname', user.first_name)
+            user.last_name = request.POST.get('lastname', user.last_name)
+            profile.phone = request.POST.get('phone', profile.phone)
+            profile.city = request.POST.get('city', profile.city)
+            profile.province = request.POST.get('province', profile.province)
+            profile.save()
+            user.save()
+            return redirect('profile')
+
+        if 'change_password' in request.POST:
+            password = request.POST.get('password', '')
+            new_password = request.POST.get('newpassword', '')
+            renew_password = request.POST.get('renewpassword', '')
+            if not user.check_password(password):
+                return render(request, 'account/profile.html', {'error': 'Mevcut parola hatalı.', 'profile': profile})
+            if new_password != renew_password:
+                return render(request, 'account/profile.html', {'error': 'Yeni parolalar eşleşmiyor.', 'profile': profile})
+            user.set_password(new_password)
+            user.save()
+            return redirect('login')
+
+    return render(request, 'account/profile.html', {
+        'city': profile.city,
+        'province': profile.province,
+        'phone': profile.phone,
+        'birthDate': '',
+        'cinsiyet': '',
+    })
 
 def logout_request(request):
     logout(request)

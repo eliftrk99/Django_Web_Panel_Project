@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% block title %}Belgeler{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <h2>Belge Yönetimi</h2>
+  <p>Bu sayfada il/ilçe kapsamına uygun belgeler listelenir.</p>
+  <div class="row">
+    {% for document in documents %}
+      <div class="col-md-6 mb-3">
+        <div class="card h-100">
+          <div class="card-body">
+            <h5 class="card-title">{{ document.title }}</h5>
+            <p class="card-text">{{ document.description|default:'Açıklama yok' }}</p>
+            <p class="text-muted small">Kategori: {{ document.get_category_display }} | Bölge: {{ document.scope_region }} / {{ document.scope_district }}</p>
+            <a class="btn btn-outline-primary btn-sm" href="{{ document.file.url }}" target="_blank">İndir</a>
+          </div>
+        </div>
+      </div>
+    {% empty %}
+      <div class="col-12"><div class="alert alert-info">Henüz belge yok.</div></div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

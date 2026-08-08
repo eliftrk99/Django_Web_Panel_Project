@@ -2,6 +2,15 @@ from django.contrib import admin
 from django.contrib.auth.models import User, Group
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin, GroupAdmin as BaseGroupAdmin
 
+from .models import UserProfile
+
+
+@admin.register(UserProfile)
+class UserProfileAdmin(admin.ModelAdmin):
+    list_display = ('user', 'phone', 'city', 'province', 'scope_region', 'scope_district')
+    search_fields = ('user__username', 'user__first_name', 'user__last_name', 'phone', 'city', 'province', 'scope_region', 'scope_district')
+
+
 # User ve Group admin'i customize et
 class CustomUserAdmin(BaseUserAdmin):
     """Django User modelini iyileştirilmiş admin paneli"""
