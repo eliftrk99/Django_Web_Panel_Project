@@ -14,7 +14,7 @@
         <h1>My Profile</h1>
         <hr>
 
-        <form method="POST">
+        <form method="POST" enctype="multipart/form-data">
             {% csrf_token %}
             {% if error %}
                 <div class="alert alert-danger">
@@ -24,10 +24,10 @@
 
             <div class="media">
                 <p class="file-upload mb-3">
-                    <input type="file" name="image" accept="images/*" id="id_image">
+                    <input type="file" name="image" accept="image/*" id="id_image">
                     <img class="rounded-circle image-fluid" src="
-                        {% if user.image %}
-                            {{ user.image.url }}
+                        {% if profile.image %}
+                            {{ profile.image.url }}
                         {% else %}
                             {% static "account/img/default_img.png" %}
                         {% endif %}

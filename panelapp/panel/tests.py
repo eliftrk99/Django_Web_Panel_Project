@@ -1,9 +1,12 @@
 from decimal import Decimal
+from io import BytesIO
 
 from django.contrib.auth.models import Group, User
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
+from PIL import Image
 
 from accounting.models import Account, Category as AccountingCategory, Expense, Income
 from account.models import UserProfile
@@ -129,6 +132,28 @@ class ScopeAndModuleTests(TestCase):
         self.assertEqual(self.user.email, 'updated@example.com')
         self.assertEqual(self.user.first_name, 'Güncel')
         self.assertEqual(self.user.last_name, 'Kullanıcı')
+
+    def test_profile_image_upload_persists(self):
+        self.client.force_login(self.user)
+        image_file = BytesIO()
+        Image.new('RGB', (100, 100), color='red').save(image_file, format='JPEG')
+        image_file.seek(0)
+        uploaded_image = SimpleUploadedFile('avatar.jpg', image_file.read(), content_type='image/jpeg')
+
+        response = self.client.post(reverse('profile'), {
+            'username': self.user.username,
+            'email': self.user.email,
+            'firstname': self.user.first_name,
+            'lastname': self.user.last_name,
+            'city': 'Ankara',
+            'province': 'Çankaya',
+            'phone': '05551234567',
+            'update': 'Update Profile',
+        }, files={'image': uploaded_image})
+
+        self.assertEqual(response.status_code, 302)
+        self.profile.refresh_from_db()
+        self.assertTrue(self.profile.image)
 
     def test_contact_form_redirects_after_submission(self):
         response = self.client.post(reverse('contact'), {

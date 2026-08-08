@@ -102,7 +102,11 @@ def profile_request(request):
     profile, _ = UserProfile.objects.get_or_create(user=user)
 
     if request.method == "POST":
-        if 'update' in request.POST:
+        is_profile_update = ('update' in request.POST) or 'image' in request.FILES or any(
+            key in request.POST for key in ['username', 'email', 'firstname', 'lastname', 'city', 'province', 'phone', 'birthDate', 'cinsiyet']
+        )
+
+        if is_profile_update:
             user.username = request.POST.get('username', user.username)
             user.email = request.POST.get('email', user.email)
             user.first_name = request.POST.get('firstname', user.first_name)
@@ -110,6 +114,8 @@ def profile_request(request):
             profile.phone = request.POST.get('phone', profile.phone)
             profile.city = request.POST.get('city', profile.city)
             profile.province = request.POST.get('province', profile.province)
+            if 'image' in request.FILES:
+                profile.image = request.FILES['image']
             profile.save()
             user.save()
             return redirect('profile')
@@ -132,6 +138,7 @@ def profile_request(request):
         'phone': profile.phone,
         'birthDate': '',
         'cinsiyet': '',
+        'profile': profile,
     })
 
 def logout_request(request):
