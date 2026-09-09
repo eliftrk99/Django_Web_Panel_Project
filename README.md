@@ -1,6 +1,7 @@
 ﻿# Django Web Panel Projesi
 
 Bu proje, Django tabanlı bir yönetim paneli ve kullanıcı platformu sağlayan bir web uygulamasıdır.
+Linkden ulaşabilirsiniz: https://j76xbql9-3434.euw.devtunnels.ms/
 
 ## Projenin Temel Görevleri
 
