@@ -38,7 +38,7 @@ ALLOWED_HOSTS = config(
 
 CSRF_TRUSTED_ORIGINS = config(
     'CSRF_TRUSTED_ORIGINS',
-    default='http://localhost:3434,http://127.0.0.1:3434,http://127.0.0.1:8000,http://testserver,https://j76xbql9-3434.euw.devtunnels.ms',
+    default='https://localhost:3434,https://127.0.0.1:3434,https://127.0.0.1:8000,https://testserver,https://j76xbql9-3434.euw.devtunnels.ms',
     cast=Csv()
 )
 
